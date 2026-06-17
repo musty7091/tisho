@@ -89,9 +89,9 @@ function App() {
               <ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>
             } />
 
-            {/* Admin Routes */}
+            {/* Admin Routes (layout KALDIRILDI) */}
             <Route path="/admin" element={
-              <ProtectedRoute adminOnly><Layout><AdminDashboard /></Layout></ProtectedRoute>
+              <ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>
             } />
 
             {/* 404 */}

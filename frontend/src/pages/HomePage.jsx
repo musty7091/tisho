@@ -25,15 +25,40 @@ export default function HomePage() {
     { id: 'tshirt', name: 'Tişörtler', icon: '👕', color: 'from-blue-400 to-blue-600' },
     { id: 'sweatshirt', name: 'Sweatshirtler', icon: '🎽', color: 'from-purple-400 to-purple-600' },
     { id: 'hoodie', name: 'Kapşonlular', icon: '🧥', color: 'from-green-400 to-green-600' },
-    { id: 'mug', name: 'Kupalar', icon: '☕', color: 'from-orange-400 to-orange-600' }
+    { id: 'mug', name: 'Kupalar', icon: '☕', color: 'from-orange-400 to-orange-600' },
+    { id: 'pillow', name: 'Yastıklar', icon: '🛏️', color: 'from-pink-400 to-pink-600' },
+    { id: 'bag', name: 'Bez Çantalar', icon: '👜', color: 'from-yellow-400 to-yellow-600' },
+    { id: 'phonecase', name: 'Telefon Kılıfları', icon: '📱', color: 'from-indigo-400 to-indigo-600' },
+    { id: 'hat', name: 'Şapkalar', icon: '🧢', color: 'from-red-400 to-red-600' },
+    { id: 'canvas', name: 'Kanvas Tablolar', icon: '🖼️', color: 'from-teal-400 to-teal-600' },
+    { id: 'baby', name: 'Bebek Giyim', icon: '👶', color: 'from-cyan-400 to-cyan-600' }
   ];
 
   return (
     <div className="min-h-screen">
-      {/* Hero */}
+      
+      {/* Kusursuz sonsuz kayma animasyonu için CSS */}
+      <style>
+        {`
+          @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-scroll {
+            animation: scroll-left 45s linear infinite;
+            width: max-content;
+            display: flex;
+          }
+          .animate-scroll:hover {
+            animation-play-state: paused;
+          }
+        `}
+      </style>
+
+      {/* Hero (Karşılama Alanı) */}
       <section className="bg-gradient-to-br from-teal-500 to-teal-700 text-white">
         <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-          <h1 className="text-5xl font-bold mb-6">Kendi Tasarımını Yarat</h1>
+          <h1 className="text-5xl font-bold mb-6">Kendin Tasarla...</h1>
           <p className="text-xl mb-8 opacity-90">
             Tişörtler, sweatshirtler ve daha fazlasını kişiselleştir
           </p>
@@ -46,24 +71,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 py-16">
+      {/* Kayan Kategoriler Menüsü */}
+      <section className="py-16 overflow-hidden">
         <h2 className="text-3xl font-bold text-center mb-12">Kategoriler</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {categories.map(cat => (
-            <Link
-              key={cat.id}
-              to={`/products?category=${cat.id}`}
-              className={`bg-gradient-to-br ${cat.color} rounded-xl p-8 text-white text-center hover:scale-105 transition`}
-            >
-              <div className="text-5xl mb-4">{cat.icon}</div>
-              <h3 className="font-bold text-lg">{cat.name}</h3>
-            </Link>
-          ))}
+        
+        <div className="overflow-hidden whitespace-nowrap py-4 relative">
+          
+          <div className="animate-scroll">
+            {/* Boşluk kalmaması için listeyi 4 kez çoğaltıyoruz */}
+            {[...categories, ...categories, ...categories, ...categories].map((cat, index) => (
+              <Link
+                key={`${cat.id}-${index}`}
+                to={`/products?category=${cat.id}`}
+                className={`bg-gradient-to-br ${cat.color} rounded-xl p-8 text-white text-center hover:scale-105 transition-transform duration-300 w-48 md:w-56 flex-shrink-0 whitespace-normal shadow-md mx-3`}
+              >
+                <div className="text-5xl mb-4">{cat.icon}</div>
+                <h3 className="font-bold text-lg">{cat.name}</h3>
+              </Link>
+            ))}
+          </div>
+
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Popüler Ürünler */}
       <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Popüler Ürünler</h2>
@@ -79,7 +110,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Özellikler */}
       <section className="max-w-7xl mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           <div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { LoadingSpinner } from '../components/common';
 import api from '../services/api';
 
@@ -6,10 +7,13 @@ const CATEGORY_OPTIONS = [
   { id: 'tshirt', name: 'Tişört' },
   { id: 'sweatshirt', name: 'Sweatshirt' },
   { id: 'hoodie', name: 'Kapşonlu' },
-  { id: 'polo', name: 'Polo' },
   { id: 'mug', name: 'Kupa' },
-  { id: 'cap', name: 'Şapka' },
   { id: 'pillow', name: 'Yastık' },
+  { id: 'bag', name: 'Bez Çanta' },
+  { id: 'phonecase', name: 'Telefon Kılıfı' },
+  { id: 'hat', name: 'Şapka' },
+  { id: 'canvas', name: 'Kanvas Tablo' },
+  { id: 'baby', name: 'Bebek Giyim' },
   { id: 'other', name: 'Diğer' }
 ];
 
@@ -196,135 +200,156 @@ export default function AdminDashboard() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 py-8"><LoadingSpinner size="lg" /></div>;
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">⚙️ Admin Panel</h1>
-
-        {/* Sekmeler */}
-        <div className="flex gap-2 mb-8 border-b flex-wrap">
-          {[
-            { id: 'overview', label: 'Genel Bakış' },
-            { id: 'orders', label: 'Siparişler' },
-            { id: 'products', label: 'Ürünler' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 font-medium ${activeTab === tab.id ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500'}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      
+      {/* SOL MENÜ (Sidebar) */}
+      <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20 flex-shrink-0">
+        <div className="p-6 text-center border-b border-slate-800">
+          <h2 className="text-2xl font-bold tracking-wider text-teal-400">TISHO</h2>
+          <p className="text-slate-400 text-xs mt-2 uppercase tracking-widest">Yönetim Paneli</p>
         </div>
+        
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <button 
+            onClick={() => setActiveTab('overview')} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'overview' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <span className="text-xl">📊</span>
+            <span className="font-medium">Genel Bakış</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('orders')} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'orders' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <span className="text-xl">📦</span>
+            <span className="font-medium">Siparişler</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('products')} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'products' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <span className="text-xl">👕</span>
+            <span className="font-medium">Ürün Kataloğu</span>
+          </button>
 
-        {/* GENEL BAKIŞ */}
-        {activeTab === 'overview' && stats && (
-          <div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-              <StatCard label="Toplam Sipariş" value={stats.totalOrders} />
-              <StatCard label="Bekleyen" value={stats.pendingOrders} color="text-yellow-600" />
-              <StatCard label="Toplam Gelir" value={`₺${stats.totalRevenue}`} color="text-teal-600" />
-              <StatCard label="Kullanıcılar" value={stats.totalUsers} color="text-blue-600" />
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              <StatCard label="Toplam Ürün" value={stats.totalProducts} />
-              <StatCard label="Toplam Tasarım" value={stats.totalDesigns} />
-              <StatCard label="Son 7 Gün" value={`${stats.recentOrders} sipariş`} />
+          <div className="pt-4 pb-2">
+            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistem</p>
+          </div>
+          
+          <button 
+            onClick={() => setActiveTab('categories')} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'categories' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <span className="text-xl">📁</span>
+            <span className="font-medium">Kategoriler</span>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('settings')} 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === 'settings' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          >
+            <span className="text-xl">⚙️</span>
+            <span className="font-medium">Ayarlar</span>
+          </button>
+        </nav>
+        
+        {/* ALT MENÜ (Siteye Dönüş ve Çıkış) */}
+        <div className="p-4 border-t border-slate-800 space-y-2">
+          <Link 
+            to="/" 
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-900/30 rounded-xl transition-colors border border-teal-900/50"
+          >
+            <span>🏪</span> Mağazaya Dön
+          </Link>
+          <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-colors">
+            <span>🚪</span> Çıkış Yap
+          </button>
+        </div>
+      </aside>
+
+      {/* ANA İÇERİK ALANI */}
+      <main className="flex-1 flex flex-col min-w-0 bg-gray-50">
+        
+        {/* Üst Bar */}
+        <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center z-10 shadow-sm flex-shrink-0">
+          <h1 className="text-2xl font-bold text-gray-800">
+            {activeTab === 'overview' && 'Genel Bakış'}
+            {activeTab === 'orders' && 'Sipariş Yönetimi'}
+            {activeTab === 'products' && 'Ürün Kataloğu'}
+            {activeTab === 'categories' && 'Kategori Yönetimi'}
+            {activeTab === 'settings' && 'Sistem Ayarları'}
+          </h1>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-600">Mustafa</span>
+            <div className="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold shadow-sm">
+              M
             </div>
           </div>
-        )}
+        </header>
 
-        {/* SİPARİŞLER */}
-        {activeTab === 'orders' && (
-          <div className="bg-white rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Sipariş No</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Müşteri</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Tutar</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Ödeme</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Durum</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {orders.length === 0 && (
-                    <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-400">Henüz sipariş yok</td></tr>
-                  )}
-                  {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium">{order.orderNumber}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {order.customer?.name}<br />
-                        <span className="text-gray-500 text-xs">{order.customer?.email}</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm font-bold text-teal-600">₺{order.totalPrice}</td>
-                      <td className="px-4 py-3">
-                        <select value={order.paymentStatus} onChange={(e) => updatePaymentStatus(order.id, e.target.value)} className="text-sm border rounded px-2 py-1">
-                          <option value="pending">Bekliyor</option>
-                          <option value="completed">Tamamlandı</option>
-                          <option value="failed">Başarısız</option>
-                        </select>
-                      </td>
-                      <td className="px-4 py-3">
-                        <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value)} className="text-sm border rounded px-2 py-1">
-                          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Kaydırılabilir İçerik */}
+        <div className="flex-1 overflow-x-hidden overflow-y-auto p-8">
+          
+          {/* GENEL BAKIŞ */}
+          {activeTab === 'overview' && stats && (
+            <div className="max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatCard label="Toplam Sipariş" value={stats.totalOrders} />
+                <StatCard label="Bekleyen Siparişler" value={stats.pendingOrders} color="text-yellow-600" />
+                <StatCard label="Toplam Gelir" value={`₺${stats.totalRevenue}`} color="text-teal-600" />
+                <StatCard label="Kayıtlı Kullanıcı" value={stats.totalUsers} color="text-blue-600" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard label="Sistemdeki Ürünler" value={stats.totalProducts} />
+                <StatCard label="Yapılan Tasarımlar" value={stats.totalDesigns} />
+                <StatCard label="Son 7 Gün" value={`${stats.recentOrders} sipariş`} />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ÜRÜNLER */}
-        {activeTab === 'products' && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-gray-600">{products.length} ürün</p>
-              <button onClick={openNewForm} className="bg-teal-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-teal-700">
-                + Yeni Ürün
-              </button>
-            </div>
-
-            <div className="bg-white rounded-lg overflow-hidden">
+          {/* SİPARİŞLER */}
+          {activeTab === 'orders' && (
+            <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Ürün</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Kategori</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Fiyat</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Durum</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">İşlem</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Sipariş No</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Müşteri</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Tutar</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Ödeme</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Durum</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
-                    {products.length === 0 && (
-                      <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-400">Henüz ürün yok</td></tr>
+                  <tbody className="divide-y divide-gray-100">
+                    {orders.length === 0 && (
+                      <tr><td colSpan="5" className="px-6 py-12 text-center text-gray-400">Henüz sipariş bulunmuyor</td></tr>
                     )}
-                    {products.map((p) => (
-                      <tr key={p._id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium">{p.name}</td>
-                        <td className="px-4 py-3 text-sm">{CATEGORY_OPTIONS.find((c) => c.id === p.category)?.name || p.category}</td>
-                        <td className="px-4 py-3 text-sm font-bold text-teal-600">₺{p.price?.basePrice}</td>
-                        <td className="px-4 py-3">
-                          {p.isActive !== false
-                            ? <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Aktif</span>
-                            : <span className="px-2 py-1 rounded-full text-xs bg-gray-200 text-gray-600">Pasif</span>}
+                    {orders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{order.orderNumber}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="font-medium text-gray-800">{order.customer?.name}</div>
+                          <div className="text-gray-500 text-xs mt-1">{order.customer?.email}</div>
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-2">
-                            <button onClick={() => openEditForm(p)} className="text-blue-600 text-sm hover:underline">Düzenle</button>
-                            <button onClick={() => deleteProduct(p._id)} className="text-red-600 text-sm hover:underline">Sil</button>
-                          </div>
+                        <td className="px-6 py-4 text-sm font-bold text-teal-600">₺{order.totalPrice}</td>
+                        <td className="px-6 py-4">
+                          <select value={order.paymentStatus} onChange={(e) => updatePaymentStatus(order.id, e.target.value)} className="text-sm border-gray-300 rounded-lg shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            <option value="pending">Bekliyor</option>
+                            <option value="completed">Tamamlandı</option>
+                            <option value="failed">Başarısız</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4">
+                          <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value)} className="text-sm border-gray-300 rounded-lg shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                          </select>
                         </td>
                       </tr>
                     ))}
@@ -332,52 +357,136 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* ÜRÜNLER */}
+          {activeTab === 'products' && (
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <p className="text-gray-500 font-medium">{products.length} ürün listeleniyor</p>
+                <button onClick={openNewForm} className="bg-teal-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-teal-700 shadow-sm transition-colors flex items-center gap-2">
+                  <span className="text-xl">+</span> Yeni Ürün Ekle
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Ürün Adı</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Kategori</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Başlangıç Fiyatı</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Durum</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {products.length === 0 && (
+                        <tr><td colSpan="5" className="px-6 py-12 text-center text-gray-400">Sistemde henüz ürün yok</td></tr>
+                      )}
+                      {products.map((p) => (
+                        <tr key={p._id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{p.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{CATEGORY_OPTIONS.find((c) => c.id === p.category)?.name || p.category}</td>
+                          <td className="px-6 py-4 text-sm font-bold text-teal-600">₺{p.price?.basePrice}</td>
+                          <td className="px-6 py-4">
+                            {p.isActive !== false
+                              ? <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Aktif</span>
+                              : <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Pasif</span>}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-4">
+                              <button onClick={() => openEditForm(p)} className="text-blue-600 text-sm font-medium hover:text-blue-800">Düzenle</button>
+                              <button onClick={() => deleteProduct(p._id)} className="text-red-600 text-sm font-medium hover:text-red-800">Sil</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* KATEGORİLER (YAPIM AŞAMASINDA) */}
+          {activeTab === 'categories' && (
+            <div className="max-w-2xl mx-auto mt-20 text-center">
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
+                <div className="text-6xl mb-6">🗂️</div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">Kategori Veritabanı Hazırlanıyor</h3>
+                <p className="text-gray-500 mb-8 leading-relaxed">
+                  Şu anda kategoriler kodun içerisine sabitlenmiş durumda. Bir sonraki adımımızda burayı dinamik bir veritabanına bağlayarak; kodlara hiç dokunmadan yeni kategori ekleyebileceğin, ikonlarını değiştirebileceğin ve silebileceğin canlı bir ekrana dönüştüreceğiz.
+                </p>
+                <div className="inline-block bg-teal-50 text-teal-700 px-6 py-3 rounded-full font-medium border border-teal-100">
+                  ⏳ Bir Sonraki Adım...
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AYARLAR (YAPIM AŞAMASINDA) */}
+          {activeTab === 'settings' && (
+            <div className="max-w-2xl mx-auto mt-20 text-center">
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
+                <div className="text-6xl mb-6">⚙️</div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">Sistem Ayarları</h3>
+                <p className="text-gray-500 mb-8 leading-relaxed">
+                  İlerleyen aşamalarda mağaza adını, KDV oranlarını, iletişim bilgilerini ve genel site ayarlarını buradan yönetebileceksin.
+                </p>
+                <div className="inline-block bg-gray-50 text-gray-500 px-6 py-3 rounded-full font-medium border border-gray-200">
+                  ⏳ Çok Yakında...
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
 
       {/* ÜRÜN FORMU (Modal) */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-4">{editingId ? 'Ürünü Düzenle' : 'Yeni Ürün'}</h2>
+        <div className="fixed inset-0 bg-slate-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowForm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">{editingId ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}</h2>
 
-            {formError && <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm">{formError}</div>}
+            {formError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm font-medium border border-red-100">{formError}</div>}
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold mb-1">Ürün Adı</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Ürün Adı</label>
+                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all" placeholder="Örn: Premium Pamuklu Tişört" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Kategori</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
+                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all">
                     {CATEGORY_OPTIONS.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Fiyat (₺)</label>
-                  <input type="number" value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Başlangıç Fiyatı (₺)</label>
+                  <input type="number" value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all" placeholder="0.00" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-1">Açıklama</label>
-                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows="2" className="w-full px-3 py-2 border rounded-lg" />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Açıklama</label>
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows="3" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all resize-none" placeholder="Ürün detaylarını buraya yazın..." />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Renkler</label>
-                <div className="flex flex-wrap gap-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Mevcut Renkler</label>
+                <div className="flex flex-wrap gap-3">
                   {COLOR_OPTIONS.map((c) => (
                     <button
                       key={c.hexCode}
                       type="button"
                       onClick={() => toggleColor(c.hexCode)}
-                      className={`w-9 h-9 rounded-full border-2 ${form.colors.includes(c.hexCode) ? 'ring-2 ring-teal-500 ring-offset-1' : ''}`}
-                      style={{ backgroundColor: c.hexCode, borderColor: '#ddd' }}
+                      className={`w-10 h-10 rounded-full border-2 transition-all transform hover:scale-110 ${form.colors.includes(c.hexCode) ? 'ring-2 ring-teal-500 ring-offset-2 scale-110' : ''}`}
+                      style={{ backgroundColor: c.hexCode, borderColor: '#e5e7eb' }}
                       title={c.name}
                     />
                   ))}
@@ -385,14 +494,14 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Bedenler</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Mevcut Bedenler/Seçenekler</label>
                 <div className="flex flex-wrap gap-2">
                   {SIZE_OPTIONS.map((s) => (
                     <button
                       key={s}
                       type="button"
                       onClick={() => toggleSize(s)}
-                      className={`px-3 py-1 border rounded-lg ${form.sizes.includes(s) ? 'bg-teal-600 text-white' : ''}`}
+                      className={`px-4 py-2 border rounded-xl font-medium transition-colors ${form.sizes.includes(s) ? 'bg-teal-600 border-teal-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                     >
                       {s}
                     </button>
@@ -400,22 +509,29 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} />
-                  Öne çıkan (anasayfada göster)
+              <div className="flex gap-8 pt-4 border-t border-gray-100">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center">
+                    <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} className="w-5 h-5 border-2 border-gray-300 rounded text-teal-600 focus:ring-teal-500 transition-colors cursor-pointer" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-teal-700 transition-colors">Ana sayfada öne çıkar</span>
                 </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-                  Aktif
+                
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center">
+                    <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="w-5 h-5 border-2 border-gray-300 rounded text-teal-600 focus:ring-teal-500 transition-colors cursor-pointer" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-teal-700 transition-colors">Satışa Açık (Aktif)</span>
                 </label>
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2 border rounded-lg hover:bg-gray-50">İptal</button>
-              <button onClick={submitProduct} disabled={savingProduct} className="flex-1 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
-                {savingProduct ? 'Kaydediliyor...' : 'Kaydet'}
+            <div className="flex gap-4 mt-8">
+              <button onClick={() => setShowForm(false)} className="flex-1 py-3.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors">
+                İptal Et
+              </button>
+              <button onClick={submitProduct} disabled={savingProduct} className="flex-1 py-3.5 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors shadow-sm disabled:opacity-50 flex justify-center items-center">
+                {savingProduct ? <LoadingSpinner size="sm" /> : 'Kaydet'}
               </button>
             </div>
           </div>
@@ -425,11 +541,11 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({ label, value, color = 'text-gray-800' }) {
+function StatCard({ label, value, color = 'text-gray-900' }) {
   return (
-    <div className="bg-white rounded-lg p-6">
-      <p className="text-gray-500 text-sm">{label}</p>
-      <p className={`text-3xl font-bold ${color}`}>{value}</p>
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-center">
+      <p className="text-gray-500 font-medium text-sm mb-2">{label}</p>
+      <p className={`text-3xl font-bold tracking-tight ${color}`}>{value}</p>
     </div>
   );
 }
