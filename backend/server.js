@@ -14,6 +14,7 @@ const designRoutes = require('./routes/designs');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const uploadRoutes = require('./routes/upload');
+const categoryRoutes = require('./routes/categories'); // YENİ EKLENEN KATEGORİ ROTASI
 
 // ==================== APP SETUP ====================
 
@@ -79,6 +80,7 @@ app.use('/api/designs', designRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/categories', categoryRoutes); // YENİ EKLENEN KATEGORİ BAĞLANTISI
 
 // Health check
 app.get('/health', (req, res) => {

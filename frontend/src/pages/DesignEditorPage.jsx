@@ -31,6 +31,7 @@ export default function DesignEditorPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [quantity, setQuantity] = useState(1);
 
   // Undo/redo geçmişi
   const [history, setHistory] = useState([[]]);
@@ -103,7 +104,7 @@ export default function DesignEditorPage() {
     }
   };
 
-  // Eleman güncelle (sürükleme/boyutlandırma sonrası) - geçmişe yazmadan anlık
+  // Eleman güncelle (sürükleme/boyutlandırma sonrası)
   const patchElement = (id, props, record = false) => {
     const next = elements.map((el) => (el.id === id ? { ...el, ...props } : el));
     if (record) {
@@ -153,7 +154,7 @@ export default function DesignEditorPage() {
     setSelectedId(el.id);
   };
 
-  // Resim yükle (fetch ile - güvenilir multipart)
+  // Resim yükle (fetch ile)
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -176,11 +177,9 @@ export default function DesignEditorPage() {
         throw new Error(data.error || 'Yükleme başarısız');
       }
 
-      // Resmi CORS-uyumlu yükle (canvas export'unda sorun olmasın)
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        // Orantıyı koruyarak makul boyuta indir
         const maxDim = 140;
         let w = img.width;
         let h = img.height;
@@ -213,25 +212,21 @@ export default function DesignEditorPage() {
       setUploadError(err.message || 'Resim yükleme hatası');
       setUploading(false);
     } finally {
-      // input'u sıfırla ki aynı dosya tekrar seçilebilsin
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  // Seçili elemanı sil
   const deleteSelected = () => {
     if (!selectedId) return;
     applyElements(elements.filter((el) => el.id !== selectedId));
     setSelectedId(null);
   };
 
-  // Seçili elemanın rengini değiştir
   const applyColorToSelected = (color) => {
     if (!selectedId) return;
     patchElement(selectedId, { fill: color }, true);
   };
 
-  // Transformer'ı kapatıp canvas görüntüsü al
   const capture = () => {
     if (trRef.current) trRef.current.nodes([]);
     const layers = stageRef.current && stageRef.current.getLayers ? stageRef.current.getLayers() : [];
@@ -241,7 +236,6 @@ export default function DesignEditorPage() {
     return uri;
   };
 
-  // PNG indir
   const downloadPNG = () => {
     const uri = capture();
     const link = document.createElement('a');
@@ -250,7 +244,6 @@ export default function DesignEditorPage() {
     link.click();
   };
 
-  // Tasarımı kaydet
   const saveDesign = async () => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -289,22 +282,21 @@ export default function DesignEditorPage() {
     }
   };
 
-  // Sepete ekle
   const handleAddToCart = async () => {
     const design = await saveDesign();
     if (design) {
-      addToCart({ ...design, productColor, productSize }, product);
+      // Sepete aktarırken adet bilgisini de ekliyoruz
+      addToCart({ ...design, productColor, productSize, quantity }, product);
       navigate('/cart');
     }
   };
 
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500">Yükleniyor...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-teal-600 font-bold text-xl">Ürün Yükleniyor...</div>;
   }
 
   const printArea = getPrintArea(product.category);
 
-  // Ortak eleman olayları
   const commonHandlers = (el) => ({
     draggable: true,
     onClick: () => setSelectedId(el.id),
@@ -323,35 +315,118 @@ export default function DesignEditorPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-2xl font-bold mb-2">Tasarım Editörü - {product.name}</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          İpucu: Bir nesneye tıklayıp köşelerinden tutarak boyutlandırabilir, üstteki tutamaçtan döndürebilirsin.
-        </p>
+    <div className="min-h-screen bg-gray-100 py-8 px-4 font-sans">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Üst Başlık */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm mb-6 flex justify-between items-center border border-gray-200">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">{product.name} Tasarlıyorsun</h1>
+            <p className="text-gray-500 text-sm mt-1">İpucu: Bir nesneye tıklayıp köşelerinden tutarak boyutlandırabilir, üstten döndürebilirsin.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Ara Toplam</p>
+            <p className="text-3xl font-bold text-teal-600">₺{(product.price?.basePrice * quantity).toFixed(2)}</p>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* CANVAS */}
-          <div className="bg-white rounded-lg p-6">
-            <div className="flex gap-2 mb-4">
-              <button onClick={undo} disabled={historyStep === 0} className="px-3 py-2 border rounded-lg disabled:opacity-40">↶ Geri</button>
-              <button onClick={redo} disabled={historyStep >= history.length - 1} className="px-3 py-2 border rounded-lg disabled:opacity-40">↷ İleri</button>
-              <button onClick={deleteSelected} disabled={!selectedId} className="px-3 py-2 border rounded-lg text-red-600 disabled:opacity-40">🗑️ Sil</button>
+        <div className="flex flex-col lg:flex-row gap-6 h-[750px]">
+          
+          {/* SOL PANEL: TASARIM ARAÇLARI */}
+          <div className="w-full lg:w-1/4 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col overflow-y-auto">
+            
+            {/* Hızlı İşlemler (Geri/İleri/Sil) */}
+            <div className="flex gap-2 mb-6 border-b pb-4">
+              <button onClick={undo} disabled={historyStep === 0} className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 disabled:opacity-40 transition font-medium text-sm">↶ Geri</button>
+              <button onClick={redo} disabled={historyStep >= history.length - 1} className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 disabled:opacity-40 transition font-medium text-sm">↷ İleri</button>
+              <button onClick={deleteSelected} disabled={!selectedId} className="flex-1 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 disabled:opacity-40 transition font-medium text-sm">🗑️ Sil</button>
             </div>
 
-            <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50" style={{ minHeight: 520 }}>
+            <div className="space-y-6">
+              {/* Metin Aracı */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><span>📝</span> Metin Ekle</h3>
+                <input
+                  type="text"
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Metni yazın..."
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl mb-3 focus:ring-2 focus:ring-teal-500 outline-none"
+                  onKeyDown={(e) => { if (e.key === 'Enter') addText(); }}
+                />
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Yazı Tipi</label>
+                    <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} className="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm outline-none">
+                      {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Boyut ({fontSize}px)</label>
+                    <input type="range" min="12" max="96" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full mt-2 accent-teal-600" />
+                  </div>
+                </div>
+                <button onClick={addText} className="w-full bg-teal-600 text-white py-2 rounded-xl font-medium hover:bg-teal-700 transition">Metni Sahneye Ekle</button>
+              </div>
+
+              {/* Şekil Aracı */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><span>⬡</span> Şekil Ekle</h3>
+                <div className="flex gap-2">
+                  <button onClick={() => addShape('rect')} className="flex-1 py-2 bg-white border border-gray-200 rounded-xl hover:border-teal-500 hover:text-teal-600 transition font-medium text-sm">⬛ Kare</button>
+                  <button onClick={() => addShape('circle')} className="flex-1 py-2 bg-white border border-gray-200 rounded-xl hover:border-teal-500 hover:text-teal-600 transition font-medium text-sm">⬤ Daire</button>
+                </div>
+              </div>
+
+              {/* Resim Aracı */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><span>🖼️</span> Görsel Yükle</h3>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                <button
+                  onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                  disabled={uploading}
+                  className="w-full py-3 border-2 border-dashed border-teal-300 bg-teal-50 text-teal-700 font-medium rounded-xl hover:bg-teal-100 disabled:opacity-50 transition"
+                >
+                  {uploading ? 'Yükleniyor...' : '+ Cihazdan Seç'}
+                </button>
+                {uploadError && <p className="text-red-500 text-xs mt-2 font-medium">{uploadError}</p>}
+              </div>
+
+              {/* Renk Aracı (Seçili Nesne İçin) */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><span>🎨</span> Nesne Rengi</h3>
+                <p className="text-xs text-gray-500 mb-3">Sahneden bir metin veya şekil seçip rengini değiştirebilirsin.</p>
+                <div className="flex flex-wrap gap-2">
+                  {TEXT_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => { setTextColor(color); applyColorToSelected(color); }}
+                      className="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
+                      style={{ backgroundColor: color, borderColor: color === textColor ? '#1f2937' : '#e5e7eb' }}
+                      title="Rengi Uygula"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ORTA PANEL: TASARIM ALANI (CANVAS - KONVA) */}
+          <div className="w-full lg:w-2/4 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col">
+            <div className="flex-1 flex items-center justify-center bg-gray-50 overflow-hidden relative rounded-t-2xl">
               <Stage
                 width={CANVAS_W}
                 height={CANVAS_H}
                 ref={stageRef}
                 onMouseDown={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}
                 onTouchStart={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}
+                className="shadow-sm bg-white"
               >
                 <Layer>
-                  {/* Ürün mockup (kategoriye göre) */}
+                  {/* Ürün Arka Planı (Mockup) */}
                   <ProductMockup category={product.category} color={productColor} />
 
-                  {/* Baskı alanı kılavuzu */}
+                  {/* Baskı Alanı Kesik Çizgileri */}
                   <Rect
                     x={printArea.x}
                     y={printArea.y}
@@ -363,7 +438,7 @@ export default function DesignEditorPage() {
                     listening={false}
                   />
 
-                  {/* Tasarım elemanları */}
+                  {/* Tasarım Nesneleri */}
                   {elements.map((el) => {
                     const ref = (node) => { if (node) nodeRefs.current[el.id] = node; };
                     if (el.type === 'text') {
@@ -437,7 +512,7 @@ export default function DesignEditorPage() {
                     return null;
                   })}
 
-                  {/* Boyutlandırma/döndürme tutamaçları */}
+                  {/* Döndürme ve Boyutlandırma Çerçevesi (Transformer) */}
                   <Transformer
                     ref={trRef}
                     rotateEnabled={true}
@@ -445,106 +520,51 @@ export default function DesignEditorPage() {
                       if (newBox.width < 10 || newBox.height < 10) return oldBox;
                       return newBox;
                     }}
+                    borderStroke="#0d9488"
+                    anchorStroke="#0d9488"
+                    anchorFill="#ffffff"
+                    anchorSize={10}
                   />
                 </Layer>
               </Stage>
             </div>
-
-            <div className="flex gap-2 mt-4">
-              <button onClick={downloadPNG} className="flex-1 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">⬇️ PNG İndir</button>
-              <button onClick={saveDesign} disabled={saving} className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
-                {saving ? 'Kaydediliyor...' : '💾 Kaydet'}
+            <div className="p-4 border-t border-gray-100 bg-white rounded-b-2xl flex justify-between items-center text-sm text-gray-500">
+              <span>Kesik çizgili alan baskı bölgesidir.</span>
+              <button onClick={downloadPNG} className="text-teal-600 font-medium hover:text-teal-800 transition flex items-center gap-1">
+                <span>⬇️</span> PNG Olarak İndir
               </button>
             </div>
           </div>
 
-          {/* ARAÇLAR */}
-          <div className="space-y-4">
-            {/* Metin */}
-            <div className="bg-white rounded-lg p-4">
-              <h3 className="font-semibold mb-3">📝 Metin Ekle</h3>
-              <input
-                type="text"
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                placeholder="Metni yazın..."
-                className="w-full px-3 py-2 border rounded-lg mb-3"
-                onKeyDown={(e) => { if (e.key === 'Enter') addText(); }}
-              />
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className="text-sm text-gray-600">Font</label>
-                  <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} className="w-full px-2 py-1 border rounded">
-                    {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Boyut: {fontSize}px</label>
-                  <input type="range" min="12" max="96" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full" />
-                </div>
-              </div>
-              <button onClick={addText} className="w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700">Metni Ekle</button>
-            </div>
+          {/* SAĞ PANEL: SİPARİŞ DETAYLARI */}
+          <div className="w-full lg:w-1/4 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col overflow-y-auto">
+            <h2 className="text-lg font-bold text-gray-800 mb-6 border-b pb-2">Ürün Seçenekleri</h2>
 
-            {/* Şekiller */}
-            <div className="bg-white rounded-lg p-4">
-              <h3 className="font-semibold mb-3">⬡ Şekiller</h3>
-              <div className="flex gap-2">
-                <button onClick={() => addShape('rect')} className="flex-1 py-3 border rounded-lg hover:bg-gray-50">⬛ Kare</button>
-                <button onClick={() => addShape('circle')} className="flex-1 py-3 border rounded-lg hover:bg-gray-50">⬤ Daire</button>
-              </div>
-            </div>
-
-            {/* Resim */}
-            <div className="bg-white rounded-lg p-4">
-              <h3 className="font-semibold mb-3">🖼️ Resim Yükle</h3>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-              <button
-                onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                disabled={uploading}
-                className="w-full py-3 border-2 border-dashed rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              >
-                {uploading ? 'Yükleniyor...' : '+ Resim Seç'}
-              </button>
-              {uploadError && <p className="text-red-500 text-sm mt-2">{uploadError}</p>}
-            </div>
-
-            {/* Renk */}
-            <div className="bg-white rounded-lg p-4">
-              <h3 className="font-semibold mb-3">🎨 Renk (seçili nesneye uygulanır)</h3>
-              <div className="grid grid-cols-8 gap-2">
-                {TEXT_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => { setTextColor(color); applyColorToSelected(color); }}
-                    className="w-8 h-8 rounded-full border-2"
-                    style={{ backgroundColor: color, borderColor: color === textColor ? '#333' : '#ddd' }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Ürün ayarları */}
-            <div className="bg-white rounded-lg p-4">
-              <h3 className="font-semibold mb-3">👕 Ürün Ayarları</h3>
-              <label className="text-sm text-gray-600">Ürün Rengi</label>
-              <div className="grid grid-cols-8 gap-2 mb-4 mt-1">
+            {/* Ürün Rengi */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Tişört Rengi</label>
+              <div className="flex flex-wrap gap-3">
                 {PRODUCT_COLORS.map((color) => (
                   <button
                     key={color}
                     onClick={() => setProductColor(color)}
-                    className="w-8 h-8 rounded-full border-2"
-                    style={{ backgroundColor: color, borderColor: color === productColor ? '#333' : '#ddd' }}
+                    className={`w-10 h-10 rounded-full border-2 transition-transform transform hover:scale-110 ${productColor === color ? 'ring-2 ring-teal-500 ring-offset-2 scale-110' : 'border-gray-200'}`}
+                    style={{ backgroundColor: color }}
+                    title="Renk Seç"
                   />
                 ))}
               </div>
-              <label className="text-sm text-gray-600">Beden</label>
-              <div className="flex gap-2 mt-1 flex-wrap">
+            </div>
+
+            {/* Beden */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Beden</label>
+              <div className="flex flex-wrap gap-2">
                 {SIZES.map((size) => (
                   <button
                     key={size}
                     onClick={() => setProductSize(size)}
-                    className={`px-3 py-1 border rounded-lg ${productSize === size ? 'bg-teal-600 text-white' : ''}`}
+                    className={`px-4 py-2 border rounded-xl font-medium transition-colors ${productSize === size ? 'bg-teal-600 border-teal-600 text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                   >
                     {size}
                   </button>
@@ -552,10 +572,36 @@ export default function DesignEditorPage() {
               </div>
             </div>
 
-            {/* Sepete ekle */}
-            <button onClick={handleAddToCart} className="w-full bg-teal-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-teal-700">
-              🛒 Sepete Ekle - ₺{product.price?.basePrice}
-            </button>
+            {/* Adet Seçimi */}
+            <div className="mb-8">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Adet</label>
+              <div className="flex items-center gap-4 bg-gray-50 w-max rounded-xl border border-gray-200 p-1">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 flex items-center justify-center text-xl font-bold text-gray-600 hover:bg-white rounded-lg transition-colors"
+                >-</button>
+                <span className="w-8 text-center font-bold text-lg">{quantity}</span>
+                <button 
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-10 h-10 flex items-center justify-center text-xl font-bold text-gray-600 hover:bg-white rounded-lg transition-colors"
+                >+</button>
+              </div>
+            </div>
+
+            {/* Kaydet ve Sepete Ekle */}
+            <div className="mt-auto flex flex-col gap-3">
+              <button 
+                onClick={handleAddToCart}
+                disabled={saving}
+                className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-lg hover:bg-black transition-colors shadow-lg flex justify-center items-center gap-3 disabled:opacity-70"
+              >
+                {saving ? <LoadingSpinner size="sm" /> : <><span>🛒</span> Sepete Ekle</>}
+              </button>
+              <p className="text-center text-xs text-gray-400 mt-1">
+                Siparişinizi sepette inceleyebilirsiniz.
+              </p>
+            </div>
+
           </div>
         </div>
       </div>

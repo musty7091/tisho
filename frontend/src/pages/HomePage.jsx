@@ -5,34 +5,40 @@ import api from '../services/api';
 
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [categories, setCategories] = useState([]); // Sabit liste yerine dinamik veritabanı hafızası açtık
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Popüler ürünleri çeken fonksiyon
     const fetchFeatured = async () => {
       try {
         const response = await api.get('/products/featured');
         setFeaturedProducts(response.data.products);
       } catch (error) {
         console.error('Featured products error:', error);
-      } finally {
-        setLoading(false);
       }
     };
-    fetchFeatured();
-  }, []);
 
-  const categories = [
-    { id: 'tshirt', name: 'Tişörtler', icon: '👕', color: 'from-blue-400 to-blue-600' },
-    { id: 'sweatshirt', name: 'Sweatshirtler', icon: '🎽', color: 'from-purple-400 to-purple-600' },
-    { id: 'hoodie', name: 'Kapşonlular', icon: '🧥', color: 'from-green-400 to-green-600' },
-    { id: 'mug', name: 'Kupalar', icon: '☕', color: 'from-orange-400 to-orange-600' },
-    { id: 'pillow', name: 'Yastıklar', icon: '🛏️', color: 'from-pink-400 to-pink-600' },
-    { id: 'bag', name: 'Bez Çantalar', icon: '👜', color: 'from-yellow-400 to-yellow-600' },
-    { id: 'phonecase', name: 'Telefon Kılıfları', icon: '📱', color: 'from-indigo-400 to-indigo-600' },
-    { id: 'hat', name: 'Şapkalar', icon: '🧢', color: 'from-red-400 to-red-600' },
-    { id: 'canvas', name: 'Kanvas Tablolar', icon: '🖼️', color: 'from-teal-400 to-teal-600' },
-    { id: 'baby', name: 'Bebek Giyim', icon: '👶', color: 'from-cyan-400 to-cyan-600' }
-  ];
+    // 2. Kategorileri veritabanından çeken YENİ fonksiyon
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/categories');
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Categories fetch error:', error);
+      }
+    };
+
+    // Her ikisini de sayfa açılırken aynı anda çalıştır
+    const loadAllData = async () => {
+      setLoading(true);
+      await fetchFeatured();
+      await fetchCategories();
+      setLoading(false);
+    };
+
+    loadAllData();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -77,19 +83,25 @@ export default function HomePage() {
         
         <div className="overflow-hidden whitespace-nowrap py-4 relative">
           
-          <div className="animate-scroll">
-            {/* Boşluk kalmaması için listeyi 4 kez çoğaltıyoruz */}
-            {[...categories, ...categories, ...categories, ...categories].map((cat, index) => (
-              <Link
-                key={`${cat.id}-${index}`}
-                to={`/products?category=${cat.id}`}
-                className={`bg-gradient-to-br ${cat.color} rounded-xl p-8 text-white text-center hover:scale-105 transition-transform duration-300 w-48 md:w-56 flex-shrink-0 whitespace-normal shadow-md mx-3`}
-              >
-                <div className="text-5xl mb-4">{cat.icon}</div>
-                <h3 className="font-bold text-lg">{cat.name}</h3>
-              </Link>
-            ))}
-          </div>
+          {loading ? (
+            <LoadingSpinner size="lg" />
+          ) : categories.length > 0 ? (
+            <div className="animate-scroll">
+              {/* Boşluk kalmaması için veritabanından gelen listeyi 4 kez çoğaltıyoruz */}
+              {[...categories, ...categories, ...categories, ...categories].map((cat, index) => (
+                <Link
+                  key={`${cat._id || cat.id}-${index}`}
+                  to={`/products?category=${cat.id}`}
+                  className={`bg-gradient-to-br ${cat.color} rounded-xl p-8 text-white text-center hover:scale-105 transition-transform duration-300 w-48 md:w-56 flex-shrink-0 whitespace-normal shadow-md mx-3`}
+                >
+                  <div className="text-5xl mb-4">{cat.icon}</div>
+                  <h3 className="font-bold text-lg">{cat.name}</h3>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">Henüz kategori bulunmuyor.</p>
+          )}
 
         </div>
       </section>

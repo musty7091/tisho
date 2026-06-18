@@ -11,6 +11,21 @@ require('dotenv').config();
 // Models
 const User = require('../models/User');
 const Product = require('../models/Product');
+const Category = require('../models/Category'); // YENİ KATEGORİ MODELİ EKLENDİ
+
+// ==================== TEST KATEGORİLERİ ====================
+const categories = [
+  { id: 'tshirt', name: 'Tişörtler', icon: '👕', color: 'from-blue-400 to-blue-600', isActive: true },
+  { id: 'sweatshirt', name: 'Sweatshirtler', icon: '🎽', color: 'from-purple-400 to-purple-600', isActive: true },
+  { id: 'hoodie', name: 'Kapşonlular', icon: '🧥', color: 'from-green-400 to-green-600', isActive: true },
+  { id: 'mug', name: 'Kupalar', icon: '☕', color: 'from-orange-400 to-orange-600', isActive: true },
+  { id: 'pillow', name: 'Yastıklar', icon: '🛏️', color: 'from-pink-400 to-pink-600', isActive: true },
+  { id: 'bag', name: 'Bez Çantalar', icon: '👜', color: 'from-yellow-400 to-yellow-600', isActive: true },
+  { id: 'phonecase', name: 'Telefon Kılıfları', icon: '📱', color: 'from-indigo-400 to-indigo-600', isActive: true },
+  { id: 'hat', name: 'Şapkalar', icon: '🧢', color: 'from-red-400 to-red-600', isActive: true },
+  { id: 'canvas', name: 'Kanvas Tablolar', icon: '🖼️', color: 'from-teal-400 to-teal-600', isActive: true },
+  { id: 'baby', name: 'Bebek Giyim', icon: '👶', color: 'from-cyan-400 to-cyan-600', isActive: true }
+];
 
 // ==================== TEST ÜRÜNLERİ ====================
 
@@ -86,7 +101,7 @@ const products = [
   },
   {
     name: 'Erkek Polo Yaka Tişört',
-    category: 'polo',
+    category: 'tshirt', // Polo kaldırıldığı için en yakın kategori olan tshirt yapıldı
     description: 'Klasik polo yaka tişört',
     price: { basePrice: 119 },
     colors: [
@@ -102,7 +117,7 @@ const products = [
   },
   {
     name: 'Çocuk Tişört',
-    category: 'tshirt',
+    category: 'baby',
     description: 'Yumuşak çocuk tişörtü',
     price: { basePrice: 69 },
     colors: [
@@ -128,8 +143,15 @@ async function seed() {
     console.log('✓ MongoDB bağlantı başarılı');
 
     // Eski verileri temizle
+    await Category.deleteMany({});
+    console.log('✓ Eski kategoriler temizlendi');
+    
     await Product.deleteMany({});
     console.log('✓ Eski ürünler temizlendi');
+
+    // Kategorileri ekle
+    await Category.insertMany(categories);
+    console.log(`✓ ${categories.length} kategori eklendi`);
 
     // Ürünleri ekle
     await Product.insertMany(products);

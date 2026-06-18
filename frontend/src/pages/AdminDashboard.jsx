@@ -3,20 +3,6 @@ import { Link } from 'react-router-dom';
 import { LoadingSpinner } from '../components/common';
 import api from '../services/api';
 
-const CATEGORY_OPTIONS = [
-  { id: 'tshirt', name: 'Tişört' },
-  { id: 'sweatshirt', name: 'Sweatshirt' },
-  { id: 'hoodie', name: 'Kapşonlu' },
-  { id: 'mug', name: 'Kupa' },
-  { id: 'pillow', name: 'Yastık' },
-  { id: 'bag', name: 'Bez Çanta' },
-  { id: 'phonecase', name: 'Telefon Kılıfı' },
-  { id: 'hat', name: 'Şapka' },
-  { id: 'canvas', name: 'Kanvas Tablo' },
-  { id: 'baby', name: 'Bebek Giyim' },
-  { id: 'other', name: 'Diğer' }
-];
-
 const COLOR_OPTIONS = [
   { name: 'Beyaz', hexCode: '#FFFFFF' },
   { name: 'Siyah', hexCode: '#000000' },
@@ -30,37 +16,65 @@ const COLOR_OPTIONS = [
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-const emptyForm = {
-  name: '',
-  category: 'tshirt',
-  basePrice: '',
-  description: '',
-  colors: [],
-  sizes: [],
-  isFeatured: false,
-  isActive: true
-};
-
 const STATUS_OPTIONS = ['pending', 'processing', 'printed', 'shipping', 'delivered', 'cancelled'];
+
+// Kategori Renk Seçenekleri (Tailwind)
+const TAILWIND_COLORS = [
+  { label: 'Mavi', value: 'from-blue-400 to-blue-600' },
+  { label: 'Mor', value: 'from-purple-400 to-purple-600' },
+  { label: 'Yeşil', value: 'from-green-400 to-green-600' },
+  { label: 'Turuncu', value: 'from-orange-400 to-orange-600' },
+  { label: 'Pembe', value: 'from-pink-400 to-pink-600' },
+  { label: 'Sarı', value: 'from-yellow-400 to-yellow-600' },
+  { label: 'Çivit', value: 'from-indigo-400 to-indigo-600' },
+  { label: 'Kırmızı', value: 'from-red-400 to-red-600' },
+  { label: 'Turkuaz', value: 'from-teal-400 to-teal-600' },
+  { label: 'Açık Mavi', value: 'from-cyan-400 to-cyan-600' }
+];
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]); // Dinamik kategoriler
   const [loading, setLoading] = useState(true);
 
   // Ürün formu durumu
+  const emptyForm = {
+    name: '',
+    category: '',
+    basePrice: '',
+    description: '',
+    colors: [],
+    sizes: [],
+    isFeatured: false,
+    isActive: true
+  };
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState('');
   const [savingProduct, setSavingProduct] = useState(false);
 
+  // Kategori formu durumu
+  const emptyCategoryForm = {
+    id: '',
+    name: '',
+    icon: '📁',
+    color: 'from-blue-400 to-blue-600',
+    isActive: true
+  };
+  const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [categorySaving, setCategorySaving] = useState(false);
+
   useEffect(() => {
     fetchStats();
     fetchOrders();
     fetchProducts();
+    fetchCategories(); // Sayfa açılırken kategorileri de çekiyoruz
   }, []);
 
   const fetchStats = async () => {
@@ -92,6 +106,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      // Admin'e tüm kategorileri getirir (aktif veya pasif fark etmeksizin)
+      const res = await api.get('/categories/admin');
+      setCategories(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // ---- Sipariş işlemleri ----
   const updateOrderStatus = async (id, status) => {
     try {
@@ -113,7 +137,8 @@ export default function AdminDashboard() {
 
   // ---- Ürün formu işlemleri ----
   const openNewForm = () => {
-    setForm(emptyForm);
+    // Yeni ürün eklerken ilk kategoriyi otomatik seçtiriyoruz
+    setForm({ ...emptyForm, category: categories.length > 0 ? categories[0].id : '' });
     setEditingId(null);
     setFormError('');
     setShowForm(true);
@@ -122,7 +147,7 @@ export default function AdminDashboard() {
   const openEditForm = (p) => {
     setForm({
       name: p.name || '',
-      category: p.category || 'tshirt',
+      category: p.category || '',
       basePrice: p.price?.basePrice ?? '',
       description: p.description || '',
       colors: (p.colors || []).map((c) => c.hexCode),
@@ -156,6 +181,7 @@ export default function AdminDashboard() {
     if (!form.basePrice || Number(form.basePrice) <= 0) return setFormError('Geçerli bir fiyat girin');
     if (form.colors.length === 0) return setFormError('En az bir renk seçin');
     if (form.sizes.length === 0) return setFormError('En az bir beden seçin');
+    if (!form.category) return setFormError('Lütfen bir kategori seçin');
 
     const payload = {
       name: form.name.trim(),
@@ -198,6 +224,43 @@ export default function AdminDashboard() {
       alert('Silme hatası');
     }
   };
+
+  // ---- Kategori Formu İşlemleri ----
+  const submitCategory = async () => {
+    setFormError('');
+    
+    if (!categoryForm.name.trim() || !categoryForm.id.trim() || !categoryForm.icon.trim()) {
+      return setFormError('Lütfen tüm zorunlu alanları doldurun (İsim, ID, İkon).');
+    }
+
+    setCategorySaving(true);
+    try {
+      if (editingCategoryId) {
+        await api.put(`/categories/${editingCategoryId}`, categoryForm);
+      } else {
+        await api.post('/categories', categoryForm);
+      }
+      setShowCategoryForm(false);
+      setCategoryForm(emptyCategoryForm);
+      setEditingCategoryId(null);
+      fetchCategories(); // Admin listesini yenile
+    } catch (e) {
+      setFormError(e.response?.data?.error || 'Kategori kaydedilirken hata oluştu.');
+    } finally {
+      setCategorySaving(false);
+    }
+  };
+
+  const deleteCategory = async (dbId) => {
+    if (!window.confirm('Bu kategoriyi silmek istediğinize emin misiniz? Ana sayfadan anında kalkacaktır.')) return;
+    try {
+      await api.delete(`/categories/${dbId}`);
+      fetchCategories();
+    } catch (e) {
+      alert('Silme hatası');
+    }
+  };
+
 
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
@@ -259,7 +322,7 @@ export default function AdminDashboard() {
           </button>
         </nav>
         
-        {/* ALT MENÜ (Siteye Dönüş ve Çıkış) */}
+        {/* ALT MENÜ */}
         <div className="p-4 border-t border-slate-800 space-y-2">
           <Link 
             to="/" 
@@ -388,7 +451,10 @@ export default function AdminDashboard() {
                       {products.map((p) => (
                         <tr key={p._id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">{p.name}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{CATEGORY_OPTIONS.find((c) => c.id === p.category)?.name || p.category}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {/* Artık dinamik kategorilerden eşleştiriyoruz */}
+                            {categories.find((c) => c.id === p.category)?.name || p.category}
+                          </td>
                           <td className="px-6 py-4 text-sm font-bold text-teal-600">₺{p.price?.basePrice}</td>
                           <td className="px-6 py-4">
                             {p.isActive !== false
@@ -410,17 +476,74 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* KATEGORİLER (YAPIM AŞAMASINDA) */}
+          {/* KATEGORİLER */}
           {activeTab === 'categories' && (
-            <div className="max-w-2xl mx-auto mt-20 text-center">
-              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
-                <div className="text-6xl mb-6">🗂️</div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">Kategori Veritabanı Hazırlanıyor</h3>
-                <p className="text-gray-500 mb-8 leading-relaxed">
-                  Şu anda kategoriler kodun içerisine sabitlenmiş durumda. Bir sonraki adımımızda burayı dinamik bir veritabanına bağlayarak; kodlara hiç dokunmadan yeni kategori ekleyebileceğin, ikonlarını değiştirebileceğin ve silebileceğin canlı bir ekrana dönüştüreceğiz.
-                </p>
-                <div className="inline-block bg-teal-50 text-teal-700 px-6 py-3 rounded-full font-medium border border-teal-100">
-                  ⏳ Bir Sonraki Adım...
+            <div className="max-w-7xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <p className="text-gray-500 font-medium">{categories.length} kategori listeleniyor</p>
+                <button 
+                  onClick={() => {
+                    setCategoryForm(emptyCategoryForm);
+                    setEditingCategoryId(null);
+                    setFormError('');
+                    setShowCategoryForm(true);
+                  }} 
+                  className="bg-teal-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-teal-700 shadow-sm transition-colors flex items-center gap-2"
+                >
+                  <span className="text-xl">+</span> Yeni Kategori Ekle
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">İkon & Renk</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Kategori Adı</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Sistem Kimliği (ID)</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Durum</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {categories.length === 0 && (
+                        <tr><td colSpan="5" className="px-6 py-12 text-center text-gray-400">Sistemde henüz kategori yok</td></tr>
+                      )}
+                      {categories.map((c) => (
+                        <tr key={c._id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center text-2xl shadow-sm`}>
+                              {c.icon}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold text-gray-900">{c.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500 font-mono">{c.id}</td>
+                          <td className="px-6 py-4">
+                            {c.isActive !== false
+                              ? <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Aktif</span>
+                              : <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Gizli</span>}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-4">
+                              <button 
+                                onClick={() => {
+                                  setCategoryForm({ id: c.id, name: c.name, icon: c.icon, color: c.color, isActive: c.isActive !== false });
+                                  setEditingCategoryId(c._id);
+                                  setFormError('');
+                                  setShowCategoryForm(true);
+                                }} 
+                                className="text-blue-600 text-sm font-medium hover:text-blue-800"
+                              >
+                                Düzenle
+                              </button>
+                              <button onClick={() => deleteCategory(c._id)} className="text-red-600 text-sm font-medium hover:text-red-800">Sil</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -445,7 +568,7 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* ÜRÜN FORMU (Modal) */}
+      {/* ================= ÜRÜN FORMU MODALI ================= */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowForm(false)}>
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -463,7 +586,8 @@ export default function AdminDashboard() {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
                   <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all">
-                    {CATEGORY_OPTIONS.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {categories.length === 0 && <option value="">Kategori Bulunamadı</option>}
+                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
@@ -537,6 +661,68 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* ================= KATEGORİ FORMU MODALI ================= */}
+      {showCategoryForm && (
+        <div className="fixed inset-0 bg-slate-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowCategoryForm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">{editingCategoryId ? 'Kategoriyi Düzenle' : 'Yeni Kategori Ekle'}</h2>
+
+            {formError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm font-medium border border-red-100">{formError}</div>}
+
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori Adı</label>
+                  <input type="text" value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Örn: Yazlık Şapkalar" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Sistem Kimliği (ID)</label>
+                  <input type="text" value={categoryForm.id} onChange={(e) => setCategoryForm({ ...categoryForm, id: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') })} disabled={!!editingCategoryId} className={`w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none ${editingCategoryId ? 'opacity-50 cursor-not-allowed' : ''}`} placeholder="Örn: yazliksapka" />
+                  <p className="text-xs text-gray-400 mt-1">İngilizce harf ve boşluksuz.</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">İkon (Emoji)</label>
+                <input type="text" value={categoryForm.icon} onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Örn: 🧢" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Vitrin Rengi</label>
+                <div className="grid grid-cols-5 gap-3">
+                  {TAILWIND_COLORS.map((tc) => (
+                    <button
+                      key={tc.value}
+                      type="button"
+                      onClick={() => setCategoryForm({ ...categoryForm, color: tc.value })}
+                      className={`w-full aspect-square rounded-xl bg-gradient-to-br ${tc.value} transition-transform transform hover:scale-105 ${categoryForm.color === tc.value ? 'ring-4 ring-gray-800 ring-offset-2 scale-105 shadow-lg' : ''}`}
+                      title={tc.label}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" checked={categoryForm.isActive} onChange={(e) => setCategoryForm({ ...categoryForm, isActive: e.target.checked })} className="w-5 h-5 border-2 border-gray-300 rounded text-teal-600 focus:ring-teal-500 transition-colors cursor-pointer" />
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-teal-700 transition-colors">Vitrinde Göster (Aktif)</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button onClick={() => setShowCategoryForm(false)} className="flex-1 py-3.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors">
+                İptal Et
+              </button>
+              <button onClick={submitCategory} disabled={categorySaving} className="flex-1 py-3.5 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors shadow-sm disabled:opacity-50 flex justify-center items-center">
+                {categorySaving ? <LoadingSpinner size="sm" /> : 'Kaydet'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

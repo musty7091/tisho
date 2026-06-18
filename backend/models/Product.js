@@ -10,18 +10,6 @@ const productSchema = new mongoose.Schema({
 
   category: {
     type: String,
-    enum: [
-      'tshirt', // T-Shirt
-      'sweatshirt', // Sweatshirt
-      'hoodie', // Kapşonlu
-      'shirt', // Gömlek
-      'polo', // Polo
-      'mug', // Kupa
-      'pillow', // Yastık
-      'apron', // Önlük
-      'cap', // Şapka
-      'other' // Diğer
-    ],
     required: true,
     index: true
   },
